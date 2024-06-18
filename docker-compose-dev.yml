@@ -1,0 +1,66 @@
+version: '3'
+
+services:
+  backend:
+    image: api-server
+    build:
+      context: ./server/
+    container_name: node-api
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongo
+    env_file:
+      - .env
+    stdin_open: true
+    tty: true
+    environment:
+      - JWT_SECREAT_KEY=${JWT_SECREAT_KEY}
+      - MONGODB_URI=${MONGODB_URI}
+      - FRONTEND_URL=${FRONTEND_URL}
+    networks:
+      - app-network
+    volumes:
+      - ./server/:/usr/src/app
+      - /usr/src/app/node_modules
+
+  frontend:
+    image: react-app
+    build:
+      context: ./client/
+    container_name: react-ui
+    restart: always
+    ports:
+      - "3000:3000"
+    stdin_open: true
+    tty: true
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+      - REACT_APP_BACKEND_URL=${REACT_APP_BACKEND_URL}
+      - REACT_APP_CLOUDINARY_CLOUD_NAME=${REACT_APP_CLOUDINARY_CLOUD_NAME}
+    networks:
+      - app-network
+    volumes:
+      - ./client/:/usr/src/app
+      - /usr/src/app/node_modules
+
+  mongo:
+    image: mongo
+    container_name: mongo-db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - app-network
+    
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
+    driver: local
